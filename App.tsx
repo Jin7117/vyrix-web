@@ -421,6 +421,8 @@ function StickyNav({ wide, go }: { wide: boolean; go: (k: Section) => void }) {
   const tabH = wide ? 82 : 64;
   return (
     <>
+    {/* black strip above the logo tab, so content never shows over the header's top edge */}
+    <View style={{ position: 'absolute', top: 0, left: 0, width: tabEnd, height: top, backgroundColor: BK }} pointerEvents="none" />
     {/* black wedge above the logo tab's diagonal: sticks with the bar, mirrors the white Tri underneath */}
     <View style={{ position: 'absolute', top: 0, left: tabEnd - 1, width: diag + 1 }} pointerEvents="none">
       <View style={{ height: top, backgroundColor: BK }} />
