@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   Animated, Easing, Image, Pressable, ScrollView, StyleSheet, Text, View,
-  useWindowDimensions, ViewStyle, StyleProp, Linking,
+  useWindowDimensions as useRawDimensions, ViewStyle, StyleProp, Linking, Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -18,6 +18,13 @@ const F = {
   b: 'PlusJakartaSans_700Bold',
   bi: 'PlusJakartaSans_700Bold_Italic',
 };
+// Desktop web renders at 80% (like browser zoom 80%). Layout code sees the zoomed-out CSS width;
+// height stays raw because getBoundingClientRect (measureInWindow) reports on-screen pixels.
+const zoomFor = (w: number) => (Platform.OS === 'web' && w >= 768 ? 0.8 : 1);
+function useWindowDimensions() {
+  const { width, height } = useRawDimensions();
+  return { width: width / zoomFor(width), height };
+}
 const ND = true; // useNativeDriver — ignored on web, real perf win on device
 
 /* ---------- scroll-reveal plumbing ---------- */
@@ -111,8 +118,8 @@ const Tri = ({ w, h, color, dir }: { w: number; h: number; color: string; dir: '
 };
 
 // Card shape: top-left tab + diagonal, body, bottom-right tab + diagonal.
-function Folder({ color, tabW, tabH, diag, bottomW, topLeft, topRight, bottomRight, children, bodyStyle }: {
-  color: string; tabW: number; tabH: number; diag: number; bottomW: number;
+function Folder({ color, tabW, tabH, bottomH = tabH, diag, bottomW, topLeft, topRight, bottomRight, children, bodyStyle }: {
+  color: string; tabW: number; tabH: number; bottomH?: number; diag: number; bottomW: number;
   topLeft?: React.ReactNode; topRight?: React.ReactNode; bottomRight?: React.ReactNode;
   children: React.ReactNode; bodyStyle?: StyleProp<ViewStyle>;
 }) {
@@ -124,9 +131,9 @@ function Folder({ color, tabW, tabH, diag, bottomW, topLeft, topRight, bottomRig
         <View style={{ flex: 1, justifyContent: 'center' }}>{topRight}</View>
       </View>
       <View style={[{ backgroundColor: color, borderTopRightRadius: 28, borderBottomLeftRadius: 28, marginTop: -1 }, bodyStyle]}>{children}</View>
-      <View style={{ flexDirection: 'row', height: tabH, marginTop: -1 }}>
+      <View style={{ flexDirection: 'row', height: bottomH, marginTop: -1 }}>
         <View style={{ flex: 1 }} />
-        <View style={{ marginRight: -1, zIndex: 1 }}><Tri w={diag} h={tabH} color={color} dir="tr" /></View>
+        <View style={{ marginRight: -1, zIndex: 1 }}><Tri w={diag} h={bottomH} color={color} dir="tr" /></View>
         <View style={{ width: bottomW, backgroundColor: color, borderBottomRightRadius: 28, alignItems: 'center', justifyContent: 'center' }}>{bottomRight}</View>
       </View>
     </View>
@@ -227,9 +234,9 @@ function Hero({ wide }: { wide: boolean }) {
 
   return (
     <View style={{ paddingHorizontal: wide ? 42 : 12, paddingTop: wide ? 22 : 8 }}>
-      <Folder color={W} tabW={wide ? 345 : 190} tabH={wide ? 82 : 64} diag={wide ? 80 : 50} bottomW={wide ? 342 : 230}
+      <Folder color={W} tabW={wide ? 345 : 190} tabH={wide ? 82 : 64} bottomH={wide ? 104 : 84} diag={wide ? 80 : 50} bottomW={wide ? 342 : 230}
         topLeft={logo} topRight={nav}
-        bottomRight={<Btn label="See what’s new" bg={BK} color={W} style={{ width: wide ? 242 : 200, height: 58, marginTop: wide ? 20 : 8 }} />}
+        bottomRight={<Btn label="See what’s new" bg={BK} color={W} style={{ width: wide ? 242 : 200, height: 58, marginTop: 4 }} />}
         bodyStyle={{ flexDirection: wide ? 'row' : 'column', alignItems: 'center', paddingVertical: wide ? 90 : 40, paddingHorizontal: wide ? width * 0.088 : 24, gap: 30 }}>
         <View style={{ flex: wide ? 1 : undefined, alignSelf: 'stretch', justifyContent: 'center' }}>
           {['Get your', 'project', 'jury-ready'].map((t, i) => (
@@ -423,6 +430,9 @@ export default function App() {
     ionicons: require('./assets/fonts/Ionicons.ttf'), // pre-registers Ionicons so it never fetches its node_modules copy
   });
   const { width, height } = useWindowDimensions();
+  useEffect(() => {
+    if (Platform.OS === 'web') (document.documentElement.style as any).zoom = String(zoomFor(window.innerWidth));
+  }, [width]);
   const checks = useRef(new Set<Check>()).current;
   const ctx = useRef({
     add: (c: Check) => { checks.add(c); return () => { checks.delete(c); }; },
