@@ -18,8 +18,8 @@ const F = {
   b: 'PlusJakartaSans_700Bold',
   bi: 'PlusJakartaSans_700Bold_Italic',
 };
-// Desktop web renders at 80% (like browser zoom 80%). Layout code sees the zoomed-out CSS width;
-// height stays raw because getBoundingClientRect (measureInWindow) reports on-screen pixels.
+// Desktop web renders at 80% (like browser zoom 80%). Layout code sees the zoomed-out CSS width.
+// Height and measureInWindow stay in on-screen px; scroll offsets are CSS px (divide screen px by the zoom).
 const zoomFor = (w: number) => (Platform.OS === 'web' && w >= 768 ? 0.8 : 1);
 function useWindowDimensions() {
   const { width, height } = useRawDimensions();
@@ -202,6 +202,8 @@ const REVIEWS = [
 ];
 
 /* ---------- sections ---------- */
+// Headings the nav links scroll to: empty markers placed right above each heading, outside its Reveal transform.
+const anchors: Partial<Record<'features' | 'mentor' | 'trust' | 'footer', any>> = {};
 function Hero({ wide }: { wide: boolean }) {
   const { width } = useWindowDimensions();
   const intro = useRef([0, 1, 2, 3, 4, 5].map(() => new Animated.Value(0))).current;
@@ -280,6 +282,7 @@ function Problems({ wide, pad }: { wide: boolean; pad: number }) {
 function Features({ wide, pad }: { wide: boolean; pad: number }) {
   return (
     <View style={{ paddingHorizontal: pad, paddingTop: wide ? 315 : 90 }}>
+      <View ref={(el) => { anchors.features = el; }} />
       <Reveal>
         <Text style={s.h2}>How Vyrix helps: from scattered work to a{'\n'}<Text style={{ color: Y }}>research-forward direction</Text></Text>
       </Reveal>
@@ -302,6 +305,7 @@ function Features({ wide, pad }: { wide: boolean; pad: number }) {
 function Mentor({ wide }: { wide: boolean }) {
   return (
     <View style={{ paddingHorizontal: wide ? 117 : 12, paddingTop: wide ? 285 : 90 }}>
+      <View ref={(el) => { anchors.mentor = el; }} />
       <Reveal from={80}>
         <Folder color={Y} tabW={wide ? 315 : 160} tabH={wide ? 75 : 56} diag={wide ? 80 : 50} bottomW={wide ? 312 : 140}
           bodyStyle={{ flexDirection: wide ? 'row' : 'column', paddingHorizontal: wide ? 110 : 24, paddingTop: wide ? 30 : 20, paddingBottom: wide ? 80 : 40, gap: 40, alignItems: wide ? 'flex-end' : 'stretch' }}>
@@ -339,6 +343,7 @@ function CheckRow({ text, delay }: { text: string; delay: number }) {
 function Trust({ wide, pad }: { wide: boolean; pad: number }) {
   return (
     <View style={{ paddingHorizontal: pad, paddingTop: wide ? 285 : 90, paddingBottom: wide ? 270 : 90 }}>
+      <View ref={(el) => { anchors.trust = el; }} />
       <Reveal><Text style={[s.eyebrow, { color: W }]}>TRUSTED BY STUDENTS</Text></Reveal>
       <Reveal delay={100}><Text style={[s.h2, { marginTop: 8 }]}>Already shaping stronger projects</Text></Reveal>
       <View style={{ flexDirection: wide ? 'row' : 'column', gap: 45, marginTop: 44 }}>
@@ -382,7 +387,7 @@ function Social({ icon, url }: { icon: 'logo-instagram' | 'logo-linkedin'; url: 
 
 function Footer({ wide }: { wide: boolean }) {
   return (
-    <View style={{ backgroundColor: W, paddingHorizontal: wide ? 84 : 24, paddingTop: 48, paddingBottom: 28 }}>
+    <View ref={(el) => { anchors.footer = el; }} style={{ backgroundColor: W, paddingHorizontal: wide ? 84 : 24, paddingTop: 48, paddingBottom: 28 }}>
       <Reveal style={{ flexDirection: wide ? 'row' : 'column', justifyContent: 'space-between', alignItems: wide ? 'flex-end' : 'flex-start', gap: 40 }}>
         <View>
           <Text style={s.fH}>Contact us at</Text>
@@ -463,9 +468,18 @@ export default function App() {
   }, [width]);
   const checks = useRef(new Set<Check>()).current;
   const scroll = useRef<any>(null);
-  const ys = useRef<Partial<Record<Section, number>>>({}).current;
-  const at = (k: Section) => ({ onLayout: (e: any) => { ys[k] = e.nativeEvent.layout.y; } });
-  const go = (k: Section) => scroll.current?.scrollTo({ y: k === 'hero' ? 0 : Math.max(0, (ys[k] ?? 0) - 60), animated: true });
+  const content = useRef<any>(null);
+  const go = (k: Section) => {
+    if (k === 'hero') return scroll.current?.scrollTo({ y: 0, animated: true });
+    const w = width >= 1100;
+    const headerH = w ? 104 : 72;
+    const z = Platform.OS === 'web' ? zoomFor(window.innerWidth) : 1;
+    // measured at click time (onLayout doesn't fire reliably on web): heading's offset inside the scroll content
+    content.current?.measureInWindow((_cx: number, cy: number) => anchors[k]?.measureInWindow((_x: number, sy: number) => {
+      const y = (sy - cy) / z - headerH - 40; // heading sits 40px under the sticky header
+      scroll.current?.scrollTo({ y: Math.max(0, y), animated: true });
+    }));
+  };
   const ctx = useRef({
     add: (c: Check) => { checks.add(c); return () => { checks.delete(c); }; },
     vh: height,
@@ -480,12 +494,14 @@ export default function App() {
       <View style={{ flex: 1, backgroundColor: BK }}>
         <ScrollView ref={scroll} style={{ flex: 1 }} scrollEventThrottle={32}
           onScroll={() => checks.forEach((c) => c(height))}>
+          <View ref={content}>
           <Hero wide={wide} />
           <Problems wide={wide} pad={pad} />
-          <View {...at('features')}><Features wide={wide} pad={pad} /></View>
-          <View {...at('mentor')}><Mentor wide={wide} /></View>
-          <View {...at('trust')}><Trust wide={wide} pad={pad} /></View>
-          <View {...at('footer')}><Footer wide={wide} /></View>
+          <Features wide={wide} pad={pad} />
+          <Mentor wide={wide} />
+          <Trust wide={wide} pad={pad} />
+          <Footer wide={wide} />
+          </View>
         </ScrollView>
         <StickyNav wide={wide} go={go} />
       </View>
