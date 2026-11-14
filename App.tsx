@@ -94,11 +94,11 @@ function Btn({ label, bg, color, onPress, style }: { label: string; bg: string; 
   );
 }
 
-function NavLink({ label, bold }: { label: string; bold?: boolean }) {
+function NavLink({ label, bold, onPress }: { label: string; bold?: boolean; onPress?: () => void }) {
   const v = useRef(new Animated.Value(0)).current;
   const go = (to: number) => Animated.timing(v, { toValue: to, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: ND }).start();
   return (
-    <Pressable onHoverIn={() => go(1)} onHoverOut={() => go(0)} accessibilityRole="link">
+    <Pressable onHoverIn={() => go(1)} onHoverOut={() => go(0)} onPress={onPress} accessibilityRole="link">
       <Text style={[s.nav, bold && { fontFamily: F.b }]}>{label}</Text>
       <Animated.View style={[s.navLine, { transform: [{ scaleX: v }] }]} />
     </Pressable>
@@ -223,19 +223,10 @@ function Hero({ wide }: { wide: boolean }) {
   const artW = wide ? Math.min(690, (width - 84 - 340 - 30) / 2) : Math.min(690, width - 72);
   const hSize = wide ? Math.min(80, width / 22) : Math.min(52, width / 8.5);
   const logo = <Image source={require('./assets/img/logo.png')} style={{ width: wide ? 192 : 140, height: (wide ? 192 : 140) * 248 / 1455, marginLeft: wide ? 75 : 24, marginTop: 6 }} resizeMode="contain" />;
-  const nav = wide ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 40, paddingBottom: 8 }}>
-      <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', gap: width > 1500 ? 88 : 48 }}>
-        {['Product', 'What’s new', 'Reviews', 'Download'].map((l) => <NavLink key={l} label={l} />)}
-      </View>
-      <NavLink label="Contact Us" bold />
-    </View>
-  ) : <View style={{ alignItems: 'flex-end', paddingRight: 16 }}><NavLink label="Contact Us" bold /></View>;
-
   return (
     <View style={{ paddingHorizontal: wide ? 42 : 12, paddingTop: wide ? 22 : 8 }}>
       <Folder color={W} tabW={wide ? 345 : 190} tabH={wide ? 82 : 64} bottomH={wide ? 104 : 84} diag={wide ? 80 : 50} bottomW={wide ? 342 : 230}
-        topLeft={logo} topRight={nav}
+        topLeft={logo}
         bottomRight={<Btn label="See what’s new" bg={BK} color={W} style={{ width: wide ? 242 : 200, height: 58, marginTop: 4 }} />}
         bodyStyle={{ flexDirection: wide ? 'row' : 'column', alignItems: 'center', paddingVertical: wide ? 90 : 40, paddingHorizontal: wide ? width * 0.088 : 24, gap: 30 }}>
         <View style={{ flex: wide ? 1 : undefined, alignSelf: 'stretch', justifyContent: 'center' }}>
@@ -276,7 +267,7 @@ function Problems({ wide, pad }: { wide: boolean; pad: number }) {
           <Chamfer key={n} color={Y} delay={i * 120} style={{ flexGrow: 1, flexBasis: width >= 1500 ? 0 : width >= 700 ? '40%' : '100%', minHeight: 292 }}>
             <View style={{ padding: 36, paddingTop: 38 }}>
               <Text style={s.num}>{n}</Text>
-              <Text style={[s.cardT, { marginTop: 66 }]}>{t}</Text>
+              <Text style={[s.cardT, { marginTop: 36 }]}>{t}</Text>
               <Text style={s.cardP}>{d}</Text>
             </View>
           </Chamfer>
@@ -292,7 +283,7 @@ function Features({ wide, pad }: { wide: boolean; pad: number }) {
       <Reveal>
         <Text style={s.h2}>How Vyrix helps: from scattered work to a{'\n'}<Text style={{ color: Y }}>research-forward direction</Text></Text>
       </Reveal>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 38, marginTop: 88, paddingHorizontal: wide ? 13 : 0 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 38, marginTop: 66, paddingHorizontal: wide ? 13 : 0 }}>
         {FEATURES.map(([n, t, d, items, c], i) => (
           <Chamfer key={n} color={c} delay={(i % 2) * 150} style={{ flexBasis: wide ? '47%' : '100%', flexGrow: 1, minHeight: 290 }}>
             <View style={{ padding: 58, paddingTop: 38 }}>
@@ -418,6 +409,31 @@ function Footer({ wide }: { wide: boolean }) {
   );
 }
 
+// Only the black part of the header sticks: an overlay that starts where the white logo tab's diagonal ends,
+// so the logo tab scrolls away with the page while the nav stays pinned.
+const NAV = [['Product', 'hero'], ['Features', 'features'], ['AI', 'mentor'], ['Reviews', 'trust']] as const;
+type Section = 'hero' | 'features' | 'mentor' | 'trust' | 'footer';
+function StickyNav({ wide, go }: { wide: boolean; go: (k: Section) => void }) {
+  const { width } = useWindowDimensions();
+  const top = wide ? 22 : 8;
+  return (
+    <View style={{
+      position: 'absolute', top: 0, right: 0, left: wide ? 42 + 345 + 80 : 12 + 190 + 50,
+      height: top + (wide ? 82 : 64), paddingTop: top, backgroundColor: BK, flexDirection: 'row', alignItems: 'center',
+      paddingRight: wide ? 82 : 28,
+    }}>
+      {wide && (
+        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', gap: width > 1500 ? 88 : 48, paddingBottom: 8 }}>
+          {NAV.map(([l, k]) => <NavLink key={l} label={l} onPress={() => go(k)} />)}
+        </View>
+      )}
+      <View style={{ flex: wide ? undefined : 1, alignItems: 'flex-end', paddingBottom: 8 }}>
+        <NavLink label="Contact Us" bold onPress={() => go('footer')} />
+      </View>
+    </View>
+  );
+}
+
 export default function App() {
   // Fonts live in assets/fonts (not node_modules): Vercel drops node_modules paths from the deployed output.
   const [loaded] = useFonts({
@@ -434,6 +450,10 @@ export default function App() {
     if (Platform.OS === 'web') (document.documentElement.style as any).zoom = String(zoomFor(window.innerWidth));
   }, [width]);
   const checks = useRef(new Set<Check>()).current;
+  const scroll = useRef<any>(null);
+  const ys = useRef<Partial<Record<Section, number>>>({}).current;
+  const at = (k: Section) => ({ onLayout: (e: any) => { ys[k] = e.nativeEvent.layout.y; } });
+  const go = (k: Section) => scroll.current?.scrollTo({ y: k === 'hero' ? 0 : Math.max(0, (ys[k] ?? 0) - 60), animated: true });
   const ctx = useRef({
     add: (c: Check) => { checks.add(c); return () => { checks.delete(c); }; },
     vh: height,
@@ -445,15 +465,18 @@ export default function App() {
   return (
     <RevealCtx.Provider value={ctx}>
       <StatusBar style="light" />
-      <ScrollView style={{ flex: 1, backgroundColor: BK }} scrollEventThrottle={32}
-        onScroll={() => checks.forEach((c) => c(height))}>
-        <Hero wide={wide} />
-        <Problems wide={wide} pad={pad} />
-        <Features wide={wide} pad={pad} />
-        <Mentor wide={wide} />
-        <Trust wide={wide} pad={pad} />
-        <Footer wide={wide} />
-      </ScrollView>
+      <View style={{ flex: 1, backgroundColor: BK }}>
+        <ScrollView ref={scroll} style={{ flex: 1 }} scrollEventThrottle={32}
+          onScroll={() => checks.forEach((c) => c(height))}>
+          <Hero wide={wide} />
+          <Problems wide={wide} pad={pad} />
+          <View {...at('features')}><Features wide={wide} pad={pad} /></View>
+          <View {...at('mentor')}><Mentor wide={wide} /></View>
+          <View {...at('trust')}><Trust wide={wide} pad={pad} /></View>
+          <View {...at('footer')}><Footer wide={wide} /></View>
+        </ScrollView>
+        <StickyNav wide={wide} go={go} />
+      </View>
     </RevealCtx.Provider>
   );
 }
