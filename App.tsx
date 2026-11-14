@@ -5,11 +5,6 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { Unbounded_800ExtraBold } from '@expo-google-fonts/unbounded';
-import {
-  PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold, PlusJakartaSans_700Bold_Italic,
-} from '@expo-google-fonts/plus-jakarta-sans';
 import { Ionicons } from '@expo/vector-icons';
 
 const Y = '#FCD400';
@@ -417,9 +412,15 @@ function Footer({ wide }: { wide: boolean }) {
 }
 
 export default function App() {
+  // Fonts live in assets/fonts (not node_modules): Vercel drops node_modules paths from the deployed output.
   const [loaded] = useFonts({
-    Unbounded_800ExtraBold, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_700Bold_Italic,
+    Unbounded_800ExtraBold: require('./assets/fonts/Unbounded_800ExtraBold.ttf'),
+    PlusJakartaSans_400Regular: require('./assets/fonts/PlusJakartaSans_400Regular.ttf'),
+    PlusJakartaSans_500Medium: require('./assets/fonts/PlusJakartaSans_500Medium.ttf'),
+    PlusJakartaSans_600SemiBold: require('./assets/fonts/PlusJakartaSans_600SemiBold.ttf'),
+    PlusJakartaSans_700Bold: require('./assets/fonts/PlusJakartaSans_700Bold.ttf'),
+    PlusJakartaSans_700Bold_Italic: require('./assets/fonts/PlusJakartaSans_700Bold_Italic.ttf'),
+    ionicons: require('./assets/fonts/Ionicons.ttf'), // pre-registers Ionicons so it never fetches its node_modules copy
   });
   const { width, height } = useWindowDimensions();
   const checks = useRef(new Set<Check>()).current;
