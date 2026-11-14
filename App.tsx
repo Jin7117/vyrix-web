@@ -416,9 +416,18 @@ type Section = 'hero' | 'features' | 'mentor' | 'trust' | 'footer';
 function StickyNav({ wide, go }: { wide: boolean; go: (k: Section) => void }) {
   const { width } = useWindowDimensions();
   const top = wide ? 22 : 8;
+  const tabEnd = wide ? 42 + 345 : 12 + 190; // where the white logo tab ends and its diagonal starts
+  const diag = wide ? 80 : 50;
+  const tabH = wide ? 82 : 64;
   return (
+    <>
+    {/* black wedge above the logo tab's diagonal: sticks with the bar, mirrors the white Tri underneath */}
+    <View style={{ position: 'absolute', top: 0, left: tabEnd - 1, width: diag + 1 }} pointerEvents="none">
+      <View style={{ height: top, backgroundColor: BK }} />
+      <Tri w={diag} h={tabH + 1} color={BK} dir="tr" />
+    </View>
     <View style={{
-      position: 'absolute', top: 0, right: 0, left: wide ? 42 + 345 + 80 : 12 + 190 + 50,
+      position: 'absolute', top: 0, right: 0, left: tabEnd + diag - 1,
       height: top + (wide ? 82 : 64), paddingTop: top, backgroundColor: BK, flexDirection: 'row', alignItems: 'center',
       paddingRight: wide ? 82 : 28,
     }}>
@@ -431,6 +440,7 @@ function StickyNav({ wide, go }: { wide: boolean; go: (k: Section) => void }) {
         <NavLink label="Contact Us" bold onPress={() => go('footer')} />
       </View>
     </View>
+    </>
   );
 }
 
