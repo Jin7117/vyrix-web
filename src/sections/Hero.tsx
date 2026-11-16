@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, Text, View } from 'react-native';
+import { Animated, Easing, Image, Linking, Text, View } from 'react-native';
 import { Btn } from '../components/Btn';
 import { Folder } from '../components/Folder';
 import { BK, F, ND, W, Y, useWindowDimensions } from '../theme';
@@ -38,8 +38,8 @@ export function Hero({ wide }: { wide: boolean }) {
           ))}
           <Animated.Text style={[s.heroP, up(intro[3])]}>A research workspace for design students. Research, organise, validate and move forward before jury day.</Animated.Text>
           <Animated.View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 15, marginTop: 34 }, up(intro[4])]}>
-            <Btn label="Sign up for free" bg={Y} color={BK} />
-            <Btn label="Log into Beta 2" bg={BK} color={W} />
+            <Btn label="Sign up for free" bg={Y} color={BK} onPress={() => Linking.openURL('https://app.vyrix.in/signup')} />
+            <Btn label="Log into Beta 2" bg={BK} color={W} onPress={() => Linking.openURL('https://app.vyrix.in/login')} />
           </Animated.View>
           <Animated.Text style={[s.heroSmall, up(intro[5])]}><Text style={{ fontFamily: F.m }}>250+</Text> design students are already using it</Animated.Text>
         </View>
