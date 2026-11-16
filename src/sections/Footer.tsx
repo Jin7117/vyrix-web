@@ -15,8 +15,8 @@ export function Footer({ wide }: { wide: boolean }) {
           <Text style={[s.fT, { marginTop: 8 }]}>support@vyrix.in</Text>
           <Text style={[s.fH, { marginTop: 18 }]}>Socials</Text>
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 10 }}>
-            <Social icon="logo-instagram" url="https://instagram.com" />
-            <Social icon="logo-linkedin" url="https://linkedin.com" />
+            <Social icon="logo-instagram" url="https://www.instagram.com/vyrixbyaispire/" />
+            <Social icon="logo-linkedin" url="https://www.linkedin.com/company/vyrix/" />
           </View>
           <Image source={require('../../assets/img/logo.png')} style={{ width: 200, height: 200 * 248 / 1455, marginTop: 20, marginLeft: -4 }} resizeMode="contain" />
           <Text style={[s.fT, { marginTop: 12 }]}>© 2026 Vyrix. All rights reserved.</Text>
